@@ -4,7 +4,7 @@
 (def tabla-materiales
   {:aire   {:tipo :vacio,   :densidad 0}
    :pared  {:tipo :fijo,    :densidad 0}
-   :piedra {:tipo :fijo,    :densidad 0}  
+   :piedra {:tipo :fijo,    :densidad 0}
    :vidrio {:tipo :fijo,    :densidad 0}
    :madera {:tipo :fijo,    :densidad 0}
    :arena  {:tipo :polvo,   :densidad 4}
@@ -21,3 +21,6 @@
    #{:arena :lava}    {:arena :vidrio, :lava :lava,    :N 20}
    #{:fuego :madera}  {:fuego :fuego,  :madera :fuego, :N 20}
    #{:lava :madera}   {:lava :lava,    :madera :fuego, :N 5}})
+
+(def filas 160)
+(def columnas 120)
