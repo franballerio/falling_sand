@@ -52,13 +52,16 @@
 
 
 (defn- obtener-material [mat]
+    "obtiene el material pasado por parametro de la tabla de materiales"
        (get config/tabla-materiales mat))
 
 (defn- obtener-densidad [mat]
+    "devuelve la densidad del material pasado por parametro"
        (let [m (obtener-material mat)]
             (or (:densidad m) 0)))
 
 (defn- se-desplaza? [mat fila]
+  "retorna un booleano que representa si el material se desplaza"
        (let [m (obtener-material mat)
              tipo (:tipo m)]
             (cond
@@ -67,10 +70,13 @@
                   :else false)))
 
 (defn- es-vacio? [mat]
+  "devuelve true si el material es vacio"
        (let [m (obtener-material mat)]
             (or (= mat :aire) (= (:tipo m) :vacio))))
 
 (defn- intentar-swap [bloque permisos i j]
+  "devuelve un nuevo bloque en el que en el caso de que se cumpla de que ambos elementos tienen permisos y
+  la densidad del elemento i sea mayor a la de j se intercambian de posicion"
        (if (and (get permisos i) (get permisos j))
              (let [mat-i (get bloque i)
                    mat-j (get bloque j)
@@ -84,14 +90,16 @@
              bloque))
 
 (defn- intentar-deslizamiento [bloque permisos fase i j fila k]
+  "en caso de que se cumpla el periodo dado por la ecuacion y que ambos elementos tengan permiso
+  se desplaza (en caso que pueda) sobre el que es de tipo vacio"
        (let [periodo-ok? (zero? (mod (+ fase (* 7 k)) 2))]
             (if (and (get permisos i) (get permisos j) periodo-ok?)
                   (let [mat-i (get bloque i)
                         mat-j (get bloque j)]
-                       (cond
+                       (cond  ;; si el j es vacio y el i se puede desplazar
                              (and (se-desplaza? mat-i fila) (es-vacio? mat-j))
                              (-> bloque (assoc i mat-j) (assoc j mat-i))
-
+                             ;; si el i es vacio y el j se puede desplazar
                              (and (se-desplaza? mat-j fila) (es-vacio? mat-i))
                              (-> bloque (assoc i mat-j) (assoc j mat-i))
 
@@ -99,7 +107,7 @@
                   bloque)))
 
 (defn aplicar-movimiento [bloque fase]
-      (let [;; 1. Permisos de movimiento calculados por posición (k = 10 + i)
+      (let [;; permisos de movimiento calculados por posición (k = 10 + i)
             permisos (vec (map (fn [i]
                                    (let [mat (get bloque i)
                                          m (obtener-material mat)
@@ -111,12 +119,12 @@
                                              (zero? (mod (+ fase (* 7 k)) N)))))
                                [0 1 2 3]))
 
-            ;; 2. Intercambios por densidad
-            ;; - Verticales: 0 con 2, luego 1 con 3
+            ;; intercambios por densidad
+            ;; verticales: 0 con 2, luego 1 con 3
             b1 (intentar-swap bloque permisos 0 2)
             b2 (intentar-swap b1 permisos 1 3)
 
-            ;; - Diagonales: orden dependiente de la fase (k = 14, N = 2)
+            ;; diagonales: orden dependiente de la fase (k = 14, N = 2)
             evaluar-diagonal? (zero? (mod (+ fase (* 7 14)) 2))
             b3 (if evaluar-diagonal?
                      (-> b2
@@ -126,7 +134,7 @@
                          (intentar-swap permisos 1 2)
                          (intentar-swap permisos 0 3)))
 
-            ;; 3. Deslizamiento horizontal
+            ;; deslizamiento horizontal
             ;; - Fila superior (0 y 1), k = 15
             b4 (intentar-deslizamiento b3 permisos fase 0 1 0 15)
             ;; - Fila inferior (2 y 3), k = 16

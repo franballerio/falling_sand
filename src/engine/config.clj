@@ -4,6 +4,9 @@
 (def tabla-materiales
   {:aire   {:tipo :vacio,   :densidad 0}
    :pared  {:tipo :fijo,    :densidad 0}
+   :piedra {:tipo :fijo,    :densidad 0}  
+   :vidrio {:tipo :fijo,    :densidad 0}
+   :madera {:tipo :fijo,    :densidad 0}
    :arena  {:tipo :polvo,   :densidad 4}
    :agua   {:tipo :liquido, :densidad 2}
    :lava   {:tipo :liquido, :densidad 3,  :periodo-movimiento 3}
