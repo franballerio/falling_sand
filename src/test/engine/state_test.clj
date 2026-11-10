@@ -223,7 +223,7 @@
   (let [estado (state/limpiar (estado [[s a]
                                        [g p]] 7))]
     (is (= [[a a] [a a]] (:grilla estado)))
-    (is (= 0 (:paso estado)))
+    (is (= 7 (:paso estado)))
     (is (= 2 (:ancho estado)))
     (is (= 2 (:alto estado)))))
 
