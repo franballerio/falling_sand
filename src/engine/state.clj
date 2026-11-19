@@ -203,14 +203,15 @@
                :paso (inc paso))))))
 
 (defn aplicar-paso
-  "Avanza la simulación un paso. Todos los bloques leen la grilla del paso
-  anterior y escriben sobre una grilla nueva, de modo que el resultado no
-  depende del orden de procesamiento. Devuelve el estado con el paso incrementado."
-  [{:keys [paso] :as estado}]
-  (let [[ox oy] (desplazamiento paso)]
-    (aplicar-paso-con estado
-                      (indices-bloques (ancho-de estado) (alto-de estado) ox oy)
-                      bloque-en-grilla)))
+  "Avanza la simulación un paso.
+
+  Reparte los bloques entre varios hilos cuando hay trabajo suficiente (ver
+  `aplicar-paso-paralelo`) y cae a la vía secuencial en grillas chicas. Todos los
+  bloques leen la grilla del paso anterior y escriben sobre una grilla nueva, de
+  modo que el resultado no depende del orden de procesamiento. Devuelve el
+  estado con el paso incrementado."
+  [estado]
+  (aplicar-paso-paralelo estado))
 
 (defn contar-particulas
   "Cuenta las celdas ocupadas por un material distinto de :aire."
