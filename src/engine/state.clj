@@ -75,23 +75,44 @@
   [{:keys [grilla alto]}]
   (or alto (count grilla)))
 
+(defn aplicar-paso-con
+  "Variante parametrizable de `aplicar-paso`: procesa los bloques en el `orden`
+  dado, aplicando `procesar-bloque-en-grilla` a cada uno.
+
+  `procesar-bloque-en-grilla` recibe
+  [grilla-acumulada grilla-original paso ox oy bx by] y devuelve la acumulada.
+
+  Existe para poder verificar la independencia de orden del paso (ver
+  `src/test/engine/independencia_orden.clj`): el contrato de la partición es que
+  cada bloque LEE solo las celdas que ESCRIBE, así que cualquier permutación del
+  orden tiene que producir la misma grilla."
+  [estado orden procesar-bloque-en-grilla]
+  (let [{:keys [grilla paso]} estado
+        [ox oy] (desplazamiento paso)]
+    (assoc estado
+           :grilla (reduce
+                    (fn [g [bx by]]
+                      (procesar-bloque-en-grilla g grilla paso ox oy bx by))
+                    grilla
+                    orden)
+           :paso (inc paso))))
+
+(defn- bloque-en-grilla
+  "Procesa un bloque con las reglas normales y lo escribe en la grilla acumulada."
+  [g grilla paso ox oy bx by]
+  (let [bloque (leer-bloque grilla ox oy bx by)
+        fase (fase-bloque paso bx by)]
+    (escribir-bloque (rules/procesar-bloque bloque fase) ox oy bx by g)))
+
 (defn aplicar-paso
   "Avanza la simulación un paso. Todos los bloques leen la grilla del paso
   anterior y escriben sobre una grilla nueva, de modo que el resultado no
   depende del orden de procesamiento. Devuelve el estado con el paso incrementado."
-  [{:keys [grilla paso] :as estado}]
-  (let [[ox oy] (desplazamiento paso)
-        ancho (ancho-de estado)
-        alto (alto-de estado)
-        nueva (reduce
-               (fn [g [bx by]]
-                 (let [bloque (leer-bloque grilla ox oy bx by)
-                       fase (fase-bloque paso bx by)
-                       res (rules/procesar-bloque bloque fase)]
-                   (escribir-bloque res ox oy bx by g)))
-               grilla
-               (indices-bloques ancho alto ox oy))]
-    (assoc estado :grilla nueva :paso (inc paso))))
+  [{:keys [paso] :as estado}]
+  (let [[ox oy] (desplazamiento paso)]
+    (aplicar-paso-con estado
+                      (indices-bloques (ancho-de estado) (alto-de estado) ox oy)
+                      bloque-en-grilla)))
 
 (defn contar-particulas
   "Cuenta las celdas ocupadas por un material distinto de :aire."

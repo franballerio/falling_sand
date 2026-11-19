@@ -9,6 +9,7 @@
 (def v :vapor)
 (def f :fuego)
 (def l :lava)
+(def o :obsidiana)
 
 (defn matriz [filas]
   (mapv vec filas))
@@ -288,3 +289,17 @@
                               [a a a]
                               [a a a]] 0)
                      1 1 1 1 0 s))))))
+
+(deftest obsidiana-suspendida-en-grilla
+  (let [inicial (estado [[a a a o a a a a]
+                         [a a a a a a a a]
+                         [a a a a a a a a]
+                         [a a a a a a a a]
+                         [p p p p p p p p]] 0)]
+    (testing "n=3: la obsidiana queda suspendida porque es un material fijo"
+      (is (= (matriz [[a a a o a a a a]
+                      [a a a a a a a a]
+                      [a a a a a a a a]
+                      [a a a a a a a a]
+                      [p p p p p p p p]])
+             (grilla-tras inicial 3))))))
