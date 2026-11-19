@@ -10,6 +10,11 @@
   (testing "Materiales estáticos (paredes no se desplazan ni caen)"
     (is (= [:pared :aire :aire :aire] (procesar-bloque [:pared :aire :aire :aire] 0))))
 
+  (testing "La obsidiana es fija: no cae ni se desliza"
+    (is (= [:obsidiana :aire :aire :aire] (procesar-bloque [:obsidiana :aire :aire :aire] 0)))
+    (is (= [:obsidiana :aire :aire :aire] (procesar-bloque [:obsidiana :aire :aire :aire] 1)))
+    (is (= [:aire :aire :obsidiana :aire] (procesar-bloque [:aire :aire :obsidiana :aire] 0))))
+
   (testing "Polvos apoyados sin espacio lateral no se deslizan"
     (is (= [:arena :arena :pared :pared] (procesar-bloque [:arena :arena :pared :pared] 0)))
     (is (= [:arena :aire :pared :pared] (procesar-bloque [:arena :aire :pared :pared] 0))))

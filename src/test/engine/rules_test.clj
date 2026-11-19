@@ -29,9 +29,9 @@
                          (rules/procesar-bloque [:aire :aire :vapor :aire] 0))))
 
          (testing "Reacciones"
-                  (is (= [:vapor :aire :piedra :aire]
+                  (is (= [:vapor :aire :obsidiana :aire]
                          (rules/procesar-bloque [:agua :aire :lava :aire] 0))
-                      "Fase 0: Reacción agua-lava (N=2)")
+                      "Fase 0: Reacción agua-lava (N=2), la lava queda como obsidiana")
                   (is (= [:aire :aire :lava :agua]
                          (rules/procesar-bloque [:agua :aire :lava :aire] 1))
                       "Fase 1: Sin reacción, el agua baja en diagonal"))
