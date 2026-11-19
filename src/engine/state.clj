@@ -75,6 +75,13 @@
   [{:keys [grilla alto]}]
   (or alto (count grilla)))
 
+(defn- bloque-en-grilla
+  "Procesa un bloque con las reglas normales y lo escribe en la grilla acumulada."
+  [g grilla paso ox oy bx by]
+  (let [bloque (leer-bloque grilla ox oy bx by)
+        fase (fase-bloque paso bx by)]
+    (escribir-bloque (rules/procesar-bloque bloque fase) ox oy bx by g)))
+
 (defn aplicar-paso-con
   "Variante parametrizable de `aplicar-paso`: procesa los bloques en el `orden`
   dado, aplicando `procesar-bloque-en-grilla` a cada uno.
@@ -82,27 +89,118 @@
   `procesar-bloque-en-grilla` recibe
   [grilla-acumulada grilla-original paso ox oy bx by] y devuelve la acumulada.
 
-  Existe para poder verificar la independencia de orden del paso (ver
-  `src/test/engine/independencia_orden.clj`): el contrato de la partición es que
-  cada bloque LEE solo las celdas que ESCRIBE, así que cualquier permutación del
-  orden tiene que producir la misma grilla."
-  [estado orden procesar-bloque-en-grilla]
-  (let [{:keys [grilla paso]} estado
-        [ox oy] (desplazamiento paso)]
-    (assoc estado
-           :grilla (reduce
-                    (fn [g [bx by]]
-                      (procesar-bloque-en-grilla g grilla paso ox oy bx by))
-                    grilla
-                    orden)
-           :paso (inc paso))))
+  La aritiedad de 2 usa el procesador estándar (`bloque-en-grilla`), así que
+  sirve como referencia secuencial sin tocar funciones privadas.
 
-(defn- bloque-en-grilla
-  "Procesa un bloque con las reglas normales y lo escribe en la grilla acumulada."
-  [g grilla paso ox oy bx by]
-  (let [bloque (leer-bloque grilla ox oy bx by)
-        fase (fase-bloque paso bx by)]
-    (escribir-bloque (rules/procesar-bloque bloque fase) ox oy bx by g)))
+  Existe para poder verificar la independencia de orden del paso (ver
+  `src/test/engine/independencia_orden.clj`) y para comparar contra
+  `aplicar-paso-paralelo` (ver `src/test/engine/paso_paralelo.clj`): el contrato
+  de la partición es que cada bloque LEE solo las celdas que ESCRIBE, así que
+  cualquier permutación del orden tiene que producir la misma grilla."
+  ([estado orden]
+   (aplicar-paso-con estado orden bloque-en-grilla))
+  ([estado orden procesar-bloque-en-grilla]
+   (let [{:keys [grilla paso]} estado
+         [ox oy] (desplazamiento paso)]
+     (assoc estado
+            :grilla (reduce
+                     (fn [g [bx by]]
+                       (procesar-bloque-en-grilla g grilla paso ox oy bx by))
+                     grilla
+                     orden)
+            :paso (inc paso)))))
+
+(def ^:private bloques-minimos-paralelo
+  "Cantidad mínima de bloques completos para repartir el paso entre varios
+  hilos. Por debajo de este umbral el costo de coordinar los futuros supera al
+  trabajo útil, así que se usa la vía secuencial."
+  64)
+
+(defn- hilos-de-trabajo
+  "Cantidad de hilos a usar en un paso paralelo: todos los procesadores menos
+  uno, dejando libre el del hilo principal."
+  []
+  (max 1 (dec (.availableProcessors (Runtime/getRuntime)))))
+
+(defn- chunks-por-fila-de-bloque
+  "Parte `orden` en a lo sumo `cant-hilos` chunks, cada uno formado por filas de
+  bloque (`by`) distintas de las de los otros chunks.
+
+  Agrupar por `by` es lo que hace disjuntas a las escrituras: el bloque (bx, by)
+  escribe solo las filas oy+2by y oy+2by+1 y las columnas ox+2bx y ox+2bx+1.
+  Devuelve una secuencia de pares [by [[bx by] ...]] ordenados por `by`, para
+  que el reparto sea determinístico (los chunks dependen solo de `orden`)."
+  [orden cant-hilos]
+  (let [por-fila (sort-by key (group-by second orden))
+        tamano (max 1 (long (Math/ceil (/ (count por-fila) (double cant-hilos)))))]
+    (partition-all tamano por-fila)))
+
+(defn- procesar-chunk
+  "Procesa los bloques de un chunk y devuelve {fila vector-fila} con las filas
+  que ese chunk posee.
+
+  Todas las lecturas van a `grilla-original`: un bloque nunca ve el resultado
+  parcial de otro. Cada fila se arma con un transient propio (uno por fila y por
+  chunk, porque los transients son de uso exclusivo de un hilo) copiado de la
+  fila original, y se vuelve a persistente antes de devolverlo."
+  [grilla-original paso ox oy chunk]
+  (reduce
+   (fn [filas [by bloques]]
+     (let [y (+ oy (* 2 by))
+           fila-arriba (transient (vec (nth grilla-original y)))
+           fila-abajo (transient (vec (nth grilla-original (inc y))))
+           [ta tb] (reduce
+                    (fn [[ta tb] [bx _]]
+                      (let [x (+ ox (* 2 bx))
+                            bloque (rules/procesar-bloque
+                                    (leer-bloque grilla-original ox oy bx by)
+                                    (fase-bloque paso bx by))]
+                        [(-> ta
+                             (assoc! x (nth bloque 0))
+                             (assoc! (inc x) (nth bloque 1)))
+                         (-> tb
+                             (assoc! x (nth bloque 2))
+                             (assoc! (inc x) (nth bloque 3)))]))
+                    [fila-arriba fila-abajo]
+                    bloques)]
+       (assoc filas y (persistent! ta) (inc y) (persistent! tb))))
+   {}
+   chunk))
+
+(defn aplicar-paso-paralelo
+  "Avanza la simulación un paso repartiendo los bloques entre varios hilos.
+
+  El resultado es indistinguible de `aplicar-paso-con` secuencial: la partición
+  por `by` hace que cada bloque lea y escriba celdas que ningún otro toca, y el
+  armado final es por índice de fila (no por orden de terminación), así que la
+  grilla devuelta es siempre la misma.
+
+  Las filas que ningún bloque cubre (con desplazamiento [1 1]: la primera y la
+  última, además de la primera y la última columna) se copian intactas de la
+  grilla original."
+  [estado]
+  (let [{:keys [grilla paso]} estado
+        [ox oy] (desplazamiento paso)
+        orden (vec (indices-bloques (ancho-de estado) (alto-de estado) ox oy))
+        cant-hilos (hilos-de-trabajo)]
+    (if (or (< cant-hilos 2)
+            (< (count orden) bloques-minimos-paralelo))
+      (aplicar-paso-con estado orden)
+      (let [chunks (chunks-por-fila-de-bloque orden cant-hilos)
+            filas-nuevas (apply merge
+                                (map deref
+                                     (mapv (fn [chunk]
+                                             (future (procesar-chunk grilla paso
+                                                                     ox oy chunk)))
+                                           chunks)))]
+        (assoc estado
+               :grilla (vec (map-indexed
+                             (fn [y fila]
+                               (if-let [nueva (get filas-nuevas y)]
+                                 nueva
+                                 fila))
+                             grilla))
+               :paso (inc paso))))))
 
 (defn aplicar-paso
   "Avanza la simulación un paso. Todos los bloques leen la grilla del paso
