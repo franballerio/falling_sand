@@ -47,7 +47,7 @@ Se abre una ventana con la grilla a la izquierda y el panel de control a la dere
 | Clic | Pinta un disco del material y radio elegidos. |
 | Arrastrar | Pinta un trazo continuo: los puntos se unen con discos para que un movimiento rápido no deje huecos. |
 
-Arriba de la grilla se muestran dos indicadores: el número de **paso** y la cantidad
+En el panel derecho se muestran dos indicadores: el número de **paso** y la cantidad
 de **partículas** (celdas con un material distinto de aire).
 
 ## Reglas de la simulación
