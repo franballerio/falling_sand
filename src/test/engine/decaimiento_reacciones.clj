@@ -16,10 +16,10 @@
     (is (= [:aire :vapor :pared :pared] (procesar-bloque [:fuego :agua :pared :pared] 2)))
     (is (= [:fuego :agua :pared :pared] (procesar-bloque [:fuego :agua :pared :pared] 3))))
 
-  (testing "Agua y Lava (la lava se solidifica como obsidiana)"
-    (is (= [:vapor :obsidiana :pared :pared] (procesar-bloque [:agua :lava :pared :pared] 2)))
+  (testing "Agua y Lava (el agua enfría la lava: queda piedra y vapor)"
+    (is (= [:vapor :piedra :pared :pared] (procesar-bloque [:agua :lava :pared :pared] 2)))
     (is (= [:agua :lava :pared :pared] (procesar-bloque [:agua :lava :pared :pared] 3)))
-    (is (= [:vapor :obsidiana :pared :pared] (procesar-bloque [:agua :lava :pared :pared] 4))))
+    (is (= [:vapor :piedra :pared :pared] (procesar-bloque [:agua :lava :pared :pared] 4))))
 
   (testing "Arena y Lava"
     (is (= [:vidrio :lava :pared :pared] (procesar-bloque [:arena :lava :pared :pared] 12)))

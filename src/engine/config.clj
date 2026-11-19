@@ -24,7 +24,7 @@
   "Reacciones entre pares de materiales. La clave es un conjunto con los dos
   materiales y el valor indica el resultado de cada uno y el período N."
   {#{:fuego :agua}   {:fuego :aire,   :agua :vapor,   :N 2}
-   #{:agua :lava}    {:agua :vapor,   :lava :obsidiana,  :N 2}
+   #{:agua :lava}    {:agua :vapor,   :lava :piedra,  :N 2}
    #{:arena :lava}   {:arena :vidrio, :lava :lava,    :N 20}
    #{:fuego :madera} {:fuego :fuego,  :madera :fuego, :N 20}
    #{:lava :madera}  {:lava :lava,    :madera :fuego, :N 5}})
