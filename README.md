@@ -3,10 +3,13 @@
 TP2 Paradigmas de Programación - Facultad de Ingeniería de la Universidad de Buenos Aires
 
 Docentes: Diego Essaya y Santiago Maraggi
-Corrector:
+Corrector: Macarena Vita Sanchez
 Integrantes del grupo: Lautaro Tomas Soria, padron: 114698
 Francisco Oscar Ballerio, padron: 114777
 Nombre del proyecto: Falling Sand
+
+## Videos
+https://drive.google.com/drive/u/0/folders/1K60_XMP0txX_CKFouoMwiw-9Va3ADsh9
 
 ## Descripción
 
