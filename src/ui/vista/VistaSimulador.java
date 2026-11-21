@@ -79,9 +79,9 @@ public class VistaSimulador extends HBox {
         conectarEventos();
     }
 
-    // ------------------------------------------------------------------
+
     // Observadores
-    // ------------------------------------------------------------------
+
 
     public void agregarListener(VistaListener listener) {
         listeners.add(listener);
@@ -91,9 +91,9 @@ public class VistaSimulador extends HBox {
         listeners.remove(listener);
     }
 
-    // ------------------------------------------------------------------
+
     // API para mostrar estado (thread-safe)
-    // ------------------------------------------------------------------
+
 
     /**
      * Muestra la grilla y los indicadores. Se puede llamar desde cualquier
@@ -124,9 +124,9 @@ public class VistaSimulador extends HBox {
         ejecutarEnFx(() -> aplicarPausa(pausado));
     }
 
-    // ------------------------------------------------------------------
+
     // Construcción de la interfaz
-    // ------------------------------------------------------------------
+
 
     private ImageView crearVistaGrilla() {
         ImageView iv = new ImageView(imagen);
@@ -193,9 +193,9 @@ public class VistaSimulador extends HBox {
         return r0;
     }
 
-    // ------------------------------------------------------------------
+
     // Eventos de la interfaz -> notificaciones a los observadores
-    // ------------------------------------------------------------------
+
 
     private void conectarEventos() {
         vistaGrilla.setOnMousePressed(this::alPresionar);
