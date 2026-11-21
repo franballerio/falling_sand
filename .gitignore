@@ -1,0 +1,22 @@
+# Leiningen / Clojure
+/target
+/classes
+/checkouts
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port
+/.pre-commit-config
+
+# Salida de compilación del proyecto
+out/
+
+# Entorno de desarrollo
+.idea/
+*.iml
+
+# Herramientas locales (no forman parte del proyecto)
+.atl/
+.codegraph/
